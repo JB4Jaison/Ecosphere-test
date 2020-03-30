@@ -1,0 +1,911 @@
+[
+        {
+            "Brand Name ": "Lebensbaum-tee",
+            "Carbon Emissions": "4",
+            "Environmental Policy": "7",
+            "Labour Conditions/ Fair Trade": "5",
+            "Final sum": "16",
+            "Grade": "A",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Gepa -tee",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "8",
+            "Final sum": "13",
+            "Grade": "B",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Lipton",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "8",
+            "Grade": "C",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Twinnings",
+            "Carbon Emissions": "0",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "5",
+            "Final sum": "8",
+            "Grade": "C",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Yogi Tea",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "8",
+            "Grade": "C",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Zonnatura",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "6",
+            "Grade": "D",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Dilmah",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Pickwick",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "8",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Piramide",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "6",
+            "Grade": "D",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "tazo",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Tea"
+        },
+        {
+            "Brand Name ": "Tony's Chocolonely",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "9",
+            "Labour Conditions/ Fair Trade": "11",
+            "Final sum": "21",
+            "Grade": "A",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Nuts",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "zotter",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "11",
+            "Labour Conditions/ Fair Trade": "8",
+            "Final sum": "22",
+            "Grade": "A",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Kinder",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Nutella",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Hershey's",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Nesquik",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Bounty",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Lindt",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "3",
+            "Grade": "E",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Toblerone",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Rolo",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "KitKat",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "After Eight",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Mars",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Twix",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Snickers",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Milky way ",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "Green and Black's",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "9",
+            "Labour Conditions/ Fair Trade": "8",
+            "Final sum": "19",
+            "Grade": "B",
+            "Categories": "Chocolate"
+        },
+        {
+            "Brand Name ": "IKEA",
+            "Carbon Emissions": "4",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "9",
+            "Grade": "C",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "McDonald's",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "Subway",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "Pizza Hut",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "Domino's Pizza",
+            "Carbon Emissions": "0",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "1",
+            "Grade": "E",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "KFC",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "Vapiano",
+            "Carbon Emissions": "0",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "0",
+            "Grade": "E",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "Burger King",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "La Place",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "3",
+            "Grade": "E",
+            "Categories": "Restaurant"
+        },
+        {
+            "Brand Name ": "Dr. Hauschka",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "14",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "17",
+            "Grade": "B",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Self",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "11",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "15",
+            "Grade": "B",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Nivea",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Dove",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Dermalogica",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Sante",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "12",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "15",
+            "Grade": "B",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Zao",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "10",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "12",
+            "Grade": "C",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "The Body Shop",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "3",
+            "Grade": "E",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "M.A.C",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Aveda",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "3",
+            "Grade": "E",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "L'oreal",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Maybelline",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Lavera",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "10",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "12",
+            "Grade": "C",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Living nature",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "10",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "12",
+            "Grade": "C",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Dermalogica",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "Eucerin",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "7",
+            "Grade": "D",
+            "Categories": "Body Care"
+        },
+        {
+            "Brand Name ": "FairPhone",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "12",
+            "Labour Conditions/ Fair Trade": "9",
+            "Final sum": "23",
+            "Grade": "B",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Apple",
+            "Carbon Emissions": "5",
+            "Environmental Policy": "7",
+            "Labour Conditions/ Fair Trade": "8",
+            "Final sum": "20",
+            "Grade": "C",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "HP",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "7",
+            "Final sum": "15",
+            "Grade": "C",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Samsung ",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "7",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Asus",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "7",
+            "Labour Conditions/ Fair Trade": "4",
+            "Final sum": "14",
+            "Grade": "C",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Microsoft",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "5",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Blackberry",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "5",
+            "Final sum": "11",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Sony",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "6",
+            "Final sum": "11",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Motorolla",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "4",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Dell",
+            "Carbon Emissions": "4",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "5",
+            "Final sum": "12",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Phillips",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "4",
+            "Final sum": "9",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Toshiba",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "8",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Lenovo",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "5",
+            "Final sum": "10",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "LG",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "3",
+            "Final sum": "6",
+            "Grade": "D",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "HTC",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "E",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "ZTE",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "E",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Huawei",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "E",
+            "Categories": "Electronics"
+        },
+        {
+            "Brand Name ": "Beck's",
+            "Carbon Emissions": "4",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "9",
+            "Grade": "C",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Amstel",
+            "Carbon Emissions": "5",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "9",
+            "Grade": "C",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Heineken",
+            "Carbon Emissions": "5",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "9",
+            "Grade": "C",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Guinness",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "5",
+            "Grade": "D",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Neumarkter Lammsbräu",
+            "Carbon Emissions": "6",
+            "Environmental Policy": "10",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "16",
+            "Grade": "B",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Corona",
+            "Carbon Emissions": "4",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "9",
+            "Grade": "C",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Warsteiner",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "6",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "9",
+            "Grade": "C",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Bavaria ",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Beer"
+        },
+        {
+            "Brand Name ": "Sprite",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "7",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Fanta",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "7",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Coca-Cola",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "7",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "7UP",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Pepsi",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Dr Pepper",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "1",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "3",
+            "Grade": "E",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Red Bull",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "1",
+            "Grade": "E",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Bionade",
+            "Carbon Emissions": "4",
+            "Environmental Policy": "7",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "11",
+            "Grade": "C",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Punica",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "7",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Almdudler",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "1",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Club-Mate",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "4",
+            "Grade": "D",
+            "Categories": "Soda"
+        },
+        {
+            "Brand Name ": "Gucci",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "4",
+            "Final sum": "12",
+            "Grade": "D",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Burberry",
+            "Carbon Emissions": "2",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "6",
+            "Final sum": "10",
+            "Grade": "D",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Stella McCartney",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "7",
+            "Labour Conditions/ Fair Trade": "6",
+            "Final sum": "16",
+            "Grade": "C",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Alexander McQueen",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "5",
+            "Labour Conditions/ Fair Trade": "4",
+            "Final sum": "12",
+            "Grade": "D",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Saint Laurent",
+            "Carbon Emissions": "3",
+            "Environmental Policy": "4",
+            "Labour Conditions/ Fair Trade": "4",
+            "Final sum": "11",
+            "Grade": "D",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Louis Vuitton",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "3",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "6",
+            "Grade": "D",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Givenchy",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "5",
+            "Grade": "E",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Fendi",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "5",
+            "Grade": "E",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Dior",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "5",
+            "Grade": "E",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Prada",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "2",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "3",
+            "Grade": "E",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Giorgio Armani",
+            "Carbon Emissions": "0",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "2",
+            "Final sum": "2",
+            "Grade": "E",
+            "Categories": "Luxury Brands"
+        },
+        {
+            "Brand Name ": "Jimmy Choo",
+            "Carbon Emissions": "1",
+            "Environmental Policy": "0",
+            "Labour Conditions/ Fair Trade": "0",
+            "Final sum": "1",
+            "Grade": "E",
+            "Categories": "Luxury Brands"
+        }
+]
