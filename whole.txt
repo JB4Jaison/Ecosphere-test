@@ -1,0 +1,2540 @@
+import dash
+import dash_core_components as dcc
+import dash_html_components as html
+import plotly.graph_objs as go
+import plotly.express as px
+import dash_table
+from dash.dependencies import Input, Output, ALL, State
+import os
+import smtplib
+import pandas as pd
+import datetime
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+if not os.path.exists("images"):
+    os.mkdir("images")
+
+external_stylesheets = [
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css',
+    'http://www.w3schools.com/lib/w3.css'
+]
+external_scripts = ['https://code.jquery.com/jquery-3.5.0.min.js']
+meta_tag = [{'name': 'viewport', 'content': 'width=device-width, initial-scale=1.0'}]
+
+
+# Utility Functions
+def remove_time(date):
+    """
+    Removes the timestamp containing only time values
+    :param date:
+    :return:
+    """
+    if type(date) == datetime.time:
+        return False
+    else:
+        return True
+
+
+def get_top_bar_cell(celltitle, cellvalue):
+    """
+    Function to return the top cell contents
+    :param celltitle:
+    :param cellvalue:
+    :return:
+    """
+    if celltitle == "Projects Completed":
+        icon = html.I(className="fas fa-trophy w3-xxlarge", )
+    elif celltitle == "Projects in Development":
+        icon = html.I(className="fas fa-history w3-xxlarge", )
+    else:
+        icon = html.I(className="fas fa-user-clock w3-xxlarge", )
+
+    return html.Div(className="top-cell", children=[
+        html.Div(className="nine columns", children=[
+            html.Div(className="top-cell-contents", children=[
+                html.P(className="p-top-bar", children=celltitle),
+                html.P(className="p-top-bar-no", children=cellvalue),
+            ])
+        ]),
+        html.Div(className="two columns", style={"margin-top": "15px", "margin-left": "12px"}, children=[
+            icon
+        ])
+    ])
+
+
+def get_top_bar(year=2017):
+    """
+    Function to calculate the top bar values
+    :param year:
+    :return:
+    """
+    df_mini_new = df_mini[df_mini["year"] == year]
+    df_completed_project = df_mini_new[df_mini_new.prjstatus.isin(["Complete"])]
+    df_in_progress = df_mini_new[~df_mini_new.prjstatus.isin(["Cancelled", "Suspended", "Deferred", "Complete"])]
+    return [
+        get_top_bar_cell("Projects Completed", df_completed_project.shape[0]),
+        get_top_bar_cell("Projects in Development", df_in_progress.shape[0]),
+        get_top_bar_cell("Total Dev Weeks", round(df_mini_new['weeks_complete'].sum())),
+    ]
+
+
+# Dataframe Creation
+df = pd.read_excel("data/Project_Dump.xlsx")
+df_mini = df[['project_name', 'project_cat_level1', 'project_cat_level2', 'region', 'priority_desc', 'weeks_complete',
+              'startdate', 'prjstatus', 'tags', 'dev_owner', 'bus_contact', 'projdesc']]
+df_devs = df[['project_name', 'project_cat_level1', 'project_cat_level2', 'region', 'priority_desc', 'weeks_complete',
+              'startdate', 'prjstatus', 'tags', 'dev_owner']]
+
+# Filtering out the suspended and cancelled projects
+df_mini = df_mini[(df_mini["prjstatus"] != "Suspended") & (df_mini["prjstatus"] != "Cancelled")]
+# print(df_mini)
+
+# temporary fix to remove non null date
+df_mini = df_mini[df_mini.startdate.notnull()]
+
+# removing datetime.time it caused reading anomalies
+df_mini = df_mini[df_mini.apply(lambda x: remove_time(x['startdate']), axis=1)]
+df_mini['year'] = df_mini.apply(lambda x: x['startdate'].year, axis=1)
+
+# Certain columns do not have a category
+df_mini = df_mini[df_mini["project_cat_level1"].notna()]
+
+# Creating dictionary pair for dropdown options
+option = [{'label': str(i), 'value': i} for i in df_mini.region.unique()]  # Regions
+option.append({'label': 'All', 'value': "All"})
+
+option_cat = [{'label': str(i), 'value': i} for i in df_mini.project_cat_level1.unique()]  # Categories
+option_cat.append({'label': 'All', 'value': "All"})
+
+year_values = [{'label': str(i), 'value': i} for i in df_mini['year'].unique()]  # Year
+
+df_no_of_weeks = df_mini.groupby("project_cat_level1")["weeks_complete"].sum()
+df_no_of_weeks_yearly = df_mini.groupby(["project_cat_level1", "year"])["weeks_complete"].sum()
+
+# Creating Dataframe for language chart
+
+#  Extracting the project languages
+df_mini_projects = df_mini[df_mini["tags"].notna()]
+df_tech_stack = pd.DataFrame(columns=['tech', 'year'])
+rows_list = []
+
+for index, row in df_mini_projects[['tags', 'year']].iterrows():
+    for x in row['tags'].split(';'):
+        rows_list.append({"tech": x, "year": row['year']})
+
+df_tech_stack = pd.DataFrame(rows_list)  # The tech Dataframe
+df_tech_yearly = df_tech_stack.groupby("tech")["year"].value_counts()
+df_tech_yearly_2018 = df_tech_stack[df_tech_stack['year'].isin([2017])]
+df_tech_yearly_2018 = df_tech_yearly_2018.groupby("tech")["year"].value_counts()
+
+# sorting the year of each tech
+df_tech_yearly = df_tech_yearly.sort_index()
+data_line_language = [{'x': list(df_tech_yearly[key].index.values), 'y': list(df_tech_yearly[key].values),
+                       'mode': 'lines', 'name': str(key)} for key in df_tech_yearly.index.levels[0].values]
+
+color_chart = ['#BBDEFB', '#90CAF9', '#64B5F6', '#42A5F5', '#2196F3', '#1E88E5', '#1976D2', '#1565C0']
+color_chart_map = {'Bu': '#BBDEFB', 'CC': '#90CAF9', 'CD': '#64B5F6', 'II': '#42A5F5',
+                   'IS': '#2196F3', 'RR': '#1E88E5', 'TT': '#1976D2', 'other': '#1565C0'}
+
+app = dash.Dash(
+    __name__,
+    external_stylesheets=external_stylesheets,
+    external_scripts=external_scripts,
+    meta_tags=meta_tag,
+    assets_ignore='.*_main*')
+
+
+# Dash App Layout
+app.layout = html.Div(className="row", children=[
+    # Navigation Bar
+    html.Div(className="navbar", children=[
+        html.Img(src=app.get_asset_url("something.png"), alt="Banner"),
+        html.Div("XXXX", className="fancy-head")
+    ]),
+
+    # Left Panel Div - Houses the tools and filters
+    html.Div(className="two columns div-left-panel", children=[
+        html.Div(
+            className="left-side-panel",
+            children=[
+
+                html.Div(className="sidebar-heading", children=["Filters"]),
+
+                html.Div([
+                    html.Label(
+                        className="Outer_label",
+                        children=[
+                            "Area",
+                            dcc.Dropdown(
+                                id="Areas",
+                                options=option,
+                                value="All",
+                                clearable=False,
+                                placeholder="Select Areas",
+                            )
+                        ]),
+                ], className="search_div"),
+
+                html.Div([
+                    html.Label(
+                        className="Outer_label",
+                        children=[
+                            "Categories",
+                            dcc.Dropdown(
+                                id="Categories",
+                                options=option_cat,
+                                value="All",
+                                clearable=False,
+                                placeholder="Choose Categories",
+                            )
+                        ],
+                    ),
+                ], className="search_div"),
+
+                html.Div([
+                    html.Label(
+                        className="Outer_label",
+                        children=[
+                            "Year",
+                            dcc.Dropdown(
+                                id="year-select",
+                                options=year_values,
+                                clearable=False,
+                                value=2017
+                            ),
+                        ],
+                    ),
+                ], className="search_div"),
+
+                html.Div(className="search_div", children=[
+                    html.Label(className="Outer_label", children=[
+                        "Priority",
+                        dcc.Checklist(
+                            id="multi-priority",
+                            className="Checkbox",
+                            options=[
+                                {'label': 'Low', 'value': 'Low'},
+                                {'label': 'Medium', 'value': 'Medium'},
+                                {'label': 'High', 'value': 'High'},
+                                {'label': 'All', 'value': 'All'}
+                            ],
+                            value=["All"])
+                    ])
+                ]),
+
+                html.Hr(className="sidebar-divider"),
+
+                html.Div(className="sidebar-heading", children=["Tools"]),
+
+                html.Div(className="table_content", children=[
+                    html.Table(id="table2", children=[
+                        html.Tbody(id="table_body", children=[
+                            html.Tr([
+                                html.Td("Dev Effort Velocity Graph"),
+                                html.Td(children=[
+                                    dcc.Checklist(id={'type': 'Checkbox', 'id': 1}, className="Dev_chart_box",
+                                                  options=[{'label': '', 'value': 'Dev_chart'}], )
+                                ]),
+                            ]),
+                            html.Tr([
+                                html.Td("Dev Efforts Per Department"),
+                                html.Td(children=[
+                                    dcc.Checklist(id={'type': 'Checkbox', 'id': 2},
+                                                  options=[{'label': '', 'value': 'Dev_chart_yearly'}], )
+                                ]),
+
+                            ]),
+                            html.Tr([
+                                html.Td("Dev Efforts Per Developer"),
+                                html.Td(children=[
+                                    dcc.Checklist(id={'type': 'Checkbox', 'id': 3},
+                                                  options=[{'label': '', 'value': 'chart-graph'}], )
+                                ]),
+                            ]),
+                            html.Tr([
+                                html.Td("Language Velocity Graph"),
+                                html.Td(children=[
+                                    dcc.Checklist(id={'type': 'Checkbox', 'id': 4},
+                                                  options=[{'label': '', 'value': 'Language-graph'}], )
+                                ]),
+                            ]),
+                        ]),
+                    ]),
+
+                    html.Div(className="Button_group", children=[
+                        html.Button(className="Button_new", id="Save_button", children="Save Locally"),
+                        html.Button(className="Button_new", id="open-button", children='Proceed To email')
+                    ])
+                ]),
+
+            ],
+        ),
+    ]),
+    # Right Panel Div - Houses the chart area
+    html.Div(className="ten columns div-right-panel", children=[
+
+        # Top Bar Div
+        html.Div(id="top_bar", className="row div-top-bar", children=get_top_bar()),
+
+        # Charts Div
+        html.Div(className="row graph-area", id="charts_area", children=[
+            html.Div(
+                id="chart_1",
+                className="row six columns graph-box unpicked",
+                children=[
+                    # Chart Top Bar
+                    html.Div(className="row chart-top-bar", children=[
+                        html.Div(className="graph-toolbar", children=[
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Refresh-Dev_chart_yearly",
+                                children=[html.I(className="fas fa-redo w3-xlarge", title="Refresh Chart")],
+                                n_clicks=0,
+                            ),
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Tweak-Dev_chart_yearly",
+                                children=[html.I(className="fas fa-pencil-alt w3-xlarge", title="Tweak Chart")],
+                                n_clicks=0,
+                            ),
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Details-Dev_chart_yearly",
+                                children=[html.I(className="fas fa-info w3-xlarge", title="Detailed view")],
+                                n_clicks=0,
+                            ),
+                        ]),
+                        html.Div(className="inline-block chart-top-bar-title", children=[
+                            html.Div(className="two columns", children=[
+                                html.I(className="far fa-chart-bar w3-xxlarge", )
+                            ]),
+                            html.Div(className="nine columns", children=[
+                                html.Div(className="", children="Dev Efforts Per Department"),
+                            ])
+                        ]),
+                    ]),
+                    # Graph div
+                    html.Div(
+                        dcc.Graph(id="Dev_chart_yearly", config={"displayModeBar": False})
+                    ),
+                ],
+            ),
+            html.Div(
+                id="chart_2",
+                className="row six columns graph-box unpicked",
+                children=[
+                    # Chart Top Bar
+                    html.Div(className="row chart-top-bar", children=[
+                        html.Div(className="graph-toolbar", children=[
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Refresh-Dev_chart",
+                                children=[html.I(className="fas fa-redo w3-xlarge", title="Refresh Chart")],
+                                n_clicks=0,
+                            ),
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Tweak-Dev_chart",
+                                children=[html.I(className="fas fa-pencil-alt w3-xlarge", title="Tweak Chart")],
+                                n_clicks=0,
+                            ),
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Details-Dev_chart",
+                                children=[html.I(className="fas fa-info w3-xlarge", title="Detailed view")],
+                                n_clicks=0,
+                            ),
+                        ]),
+                        html.Div(className="inline-block chart-top-bar-title", children=[
+                            html.Div(className="two columns", children=[
+                                html.I(className="fas fa-chart-line w3-xxlarge", )
+                            ]),
+                            html.Div(className="nine columns", children=[
+                                html.Div(className="", children="Dev Effort Velocity Graph"),
+                            ])
+                        ]),
+                    ]),
+                    # Graph div
+                    html.Div(
+                        dcc.Graph(id="Dev_chart", config={"displayModeBar": False})
+                    ),
+                ],
+            ),
+        ]),
+
+        # Stat Cards Area
+        html.Div(className="row graph-area", children=[
+            html.Div(className="row chart-top-bar", children=[
+                html.Div(className="inline-block chart-top-bar-title", style={}, children=[
+                    html.Div(className="two columns", children=[
+                        html.I(className="fas fa-percent w3-xxlarge", )
+                    ]),
+                    html.Div(className="nine columns", children=[
+                        html.Div(className="", children="Change From Previous Year"),
+                    ])
+                ]),
+            ]),
+            html.Div(id="display_area", className="row graph-area")
+        ]),
+
+        html.Div(id="charts_area_2", className="row graph-area", children=[
+            html.Div(
+                id="chart_3",
+                className="row six columns graph-box unpicked",
+                children=[
+                    # Chart Top Bar
+                    html.Div(className="row chart-top-bar", children=[
+                        html.Div(className="graph-toolbar", children=[
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Refresh-chart-graph",
+                                children=[html.I(className="fas fa-redo w3-xlarge", title="Refresh Chart")],
+                                n_clicks=0,
+                            ),
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Tweak-chart-graph",
+                                children=[html.I(className="fas fa-pencil-alt w3-xlarge", title="Tweak Chart")],
+                                n_clicks=0,
+                            ),
+                            html.Span(
+                                className="inline-block chart-title",
+                                id="Details-chart-graph",
+                                children=[html.I(className="fas fa-info w3-xlarge", title="Detailed view")],
+                                n_clicks=0,
+                            ),
+                        ]),
+                        html.Div(className="inline-block chart-top-bar-title", style={}, children=[
+                            html.Div(className="two columns", children=[
+                                html.I(className="fas fa-chart-pie w3-xxlarge", )
+                            ]),
+                            html.Div(className="nine columns", children=[
+                                html.Div(className="", children="Dev Efforts Per Developer"),
+                            ])
+                        ])
+                    ]),
+
+                    html.Div(className="selection_div", children=[
+                        dcc.Dropdown(
+                            options=[{"label": x, "value": x} for x in df.dev_owner.unique()],
+                            placeholder="Name of team members",
+                            id="name_drop",
+                            value="kerobert"
+                        ),
+                    ]),
+                    # Graph div
+                    html.Div(
+                        dcc.Graph(
+                            id="chart-graph",
+                        )
+                    ),
+                ],
+            ),
+            html.Div(id="chart_4", className="row six columns graph-box unpicked", children=[
+                # Chart Top Bar
+                html.Div(className="row chart-top-bar", children=[
+                    html.Div(className="graph-toolbar", children=[
+                        html.Span(
+                            className="inline-block chart-title",
+                            id="Refresh-Language-graph",
+                            children=[html.I(className="fas fa-redo w3-xlarge", title="Refresh Chart")],
+                            n_clicks=0,
+                        ),
+                        html.Span(
+                            className="inline-block chart-title",
+                            id="Tweak-Language-graph",
+                            children=[html.I(className="fas fa-pencil-alt w3-xlarge", title="Tweak Chart")],
+                            n_clicks=0,
+                        ),
+                        html.Span(
+                            className="inline-block chart-title",
+                            id="Details-Language-graph",
+                            children=[html.I(className="fas fa-info w3-xlarge", title="Detailed view")],
+                            n_clicks=0,
+                        ),
+                    ]),
+                    html.Div(className="inline-block chart-top-bar-title", style={}, children=[
+                        html.Div(className="two columns", children=[
+                            html.I(className="fas fa-chart-line w3-xxlarge", )
+                        ]),
+                        html.Div(className="nine columns", children=[
+                            html.Div(className="", children="Language Velocity Graph"),
+                        ])
+                    ]),
+                ]),
+                html.Div(className="selection_div", children=[
+                    dcc.Dropdown(
+                        options=[{"label": x, "value": x} for x in df_tech_stack.tech.unique()],
+                        placeholder="Languages to show",
+                        id="language_select_multi",
+                        value="ATP",
+                        multi=True)
+                ]),
+                # Graph div
+                html.Div(
+                    dcc.Graph(id="Language-graph", config={"displayModeBar": False})
+                )
+            ]),
+
+        ]),
+
+        # Top Ten Projects Table area
+        html.Div(className="row graph-area", children=[
+            # Table Top Bar
+            html.Div(className="row chart-top-bar", children=[
+                html.Div(className="inline-block chart-top-bar-title", style={}, children=[
+                    html.Div(className="two columns", children=[
+                        html.I(className="far fa-list-alt w3-xxlarge", )
+                    ]),
+                    html.Div(className="nine columns", children=[
+                        html.Div(className="", children="Top 10 Projects"),
+                    ])
+                ]),
+            ]),
+            html.Table(id="table1", className="stripeme", children=[
+                html.Thead([
+                    html.Tr([
+                        html.Th(" No. "),
+                        html.Th(" Project Name"),
+                        html.Th(" Bus Unit ")
+                    ]),
+                ]),
+                html.Tbody(id="table_area")
+            ]),
+        ]),
+
+    ]),
+    # Floating Card
+    html.Div(id="details_card", className="info-card hide", children=[
+        html.Div(className="graph-toolbar", children=[
+            html.Span(
+                className="inline-block chart-title",
+                id="close_button",
+                children=[html.I(className="fas fa-times w3-xlarge", title="Close Table")],
+                n_clicks=0,
+            ),
+        ]),
+        html.Div(className="inline-block chart-top-bar-title", children=[
+            html.Div(className="two columns", children=[
+                html.I(className="far fa-chart-bar w3-xxlarge", )
+            ]),
+            html.Div(className="nine columns", children=[
+                html.Div(className="", children="Details"),
+            ])
+        ]),
+        html.Div(className="container", children=[
+            html.Div(children=[
+                html.P(style={"display": "inline-block"}, children=[html.B("Project Name: ")]),
+                html.P(style={"display": "inline-block"}, id="name"),
+            ]),
+            html.Div([
+                html.P(style={"display": "inline-block"}, children=[html.B("Project Category: ")]),
+                html.P(style={"display": "inline-block"}, id="category"),
+            ]),
+            html.Div([
+                html.P(style={"display": "inline-block"}, children=[html.B("Project Status:")]),
+                html.P(style={"display": "inline-block"}, id="status"),
+            ]),
+            html.Div([
+                html.P(style={"display": "inline-block"}, children=[html.B("Dev Owner: ")]),
+                html.P(style={"display": "inline-block"}, id="owner"),
+            ]),
+            html.Div([
+                html.P(style={"display": "inline-block"}, children=[html.B("Business Contact: ")]),
+                html.P(style={"display": "inline-block"}, id="contact"),
+            ]),
+            html.Div([
+                html.P(html.B("Project Project Description: ")),
+                html.P(id="description"),
+            ]),
+        ]),
+    ]),
+
+    # Div to store names of clicked charts globally
+    html.Div(id="clicked_charts_store", children=[]),
+    html.Div(id="test_area", className="hide", children=[]),
+    html.Div(id="test_area2", className="hide", children=[]),
+
+    # Floating Email Form
+    html.Div(id="form-frame", className="hide", children=[
+        html.Form(className="form-popup", id="myForm", children=[
+            html.Div(id="form-container", children=[
+
+                html.Label("Sender E-mail ID", htmlFor="sender"),
+                dcc.Input(id='sender', placeholder='Your e-mail id here...', type='email',
+                          value='',
+                          style={'display': 'inline-block', 'verticalAlign': 'top', 'width': '90%'}),
+
+                html.Label("Reciever E-mail ID", htmlFor="reciever"),
+                dcc.Input(id='receiver', placeholder='Add Recepients here...', type='email', multiple=True, value='',
+                          style={'display': 'inline-block', 'verticalAlign': 'top', 'width': '90%'}),
+
+                html.Label("Input Body", htmlFor="input_comments"),
+                dcc.Textarea(id='input_notes', placeholder='Add note here...', rows=5,
+                             style={'display': 'inline-block', 'verticalAlign': 'top', 'width': '90%'}),
+            ]),
+        ]),
+
+        html.Button(id='Email_button', className="btn", children='Send Email'),
+        html.Button(id='btn-cancel', children='Cancel Email'),
+        html.Div(id="test_area3", children=[]),
+    ]),
+
+    # Storage area for chart data
+    html.Div(id='datastore-chart_1', className="hide", children=[df_mini.to_json()]),
+    html.Div(id='datastore-chart_2', className="hide", children=[df_mini.to_json()]),
+    html.Div(id='datastore-chart_3', className="hide", children=[df_devs[df_devs.dev_owner == "kerobert"].to_json()]),
+    html.Div(id='datastore-chart_4', className="hide", children=[df_tech_stack.to_json()]),
+
+    # Tables to show detailed info of the graph
+    html.Div(id="details_table_1", className="info-table hide", children=[
+        html.Div(className="graph-toolbar", children=[
+            html.Span(
+                className="inline-block chart-title",
+                id="close_button_1",
+                children=[html.I(className="fas fa-times w3-xlarge", title="Close Table")],
+                n_clicks=0,
+            ),
+        ]),
+        html.Div(className="inline-block chart-top-bar-title", children=[
+            html.Div(className="two columns", children=[
+                html.I(className="far fa-chart-bar w3-xxlarge", )
+            ]),
+            html.Div(className="nine columns", children=[
+                html.Div(className="", children="Details"),
+            ])
+        ]),
+        html.Div(id='datatable_1', children=[
+            dash_table.DataTable(
+                columns=[
+                    {"name": i, "id": i} for i in df_devs
+                ],
+                data=df_devs.to_dict('records'),
+                id="Dev_chart_yearly_table",
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current=0,
+                page_size=10,
+                style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+            ),
+        ])
+    ]),
+    html.Div(id="details_table_2", className="info-table hide", children=[
+        html.Div(className="graph-toolbar", children=[
+            html.Span(
+                className="inline-block chart-title",
+                id="close_button_2",
+                children=[html.I(className="fas fa-times w3-xlarge", title="Close Table")],
+                n_clicks=0,
+            ),
+        ]),
+        html.Div(className="inline-block chart-top-bar-title", children=[
+            html.Div(className="two columns", children=[
+                html.I(className="far fa-chart-bar w3-xxlarge", )
+            ]),
+            html.Div(className="nine columns", children=[
+                html.Div(className="", children="Details"),
+            ])
+        ]),
+        html.Div(id='datatable_2', children=[
+            dash_table.DataTable(
+                columns=[
+                    {"name": i, "id": i} for i in df_devs
+                ],
+                data=df_devs.to_dict('records'),
+                id="Dev_chart_table",
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current=0,
+                page_size=10,
+                style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+            ),
+        ])
+    ]),
+    html.Div(id="details_table_3", className="info-table hide", children=[
+        html.Div(className="graph-toolbar", children=[
+            html.Span(
+                className="inline-block chart-title",
+                id="close_button_3",
+                children=[html.I(className="fas fa-times w3-xlarge", title="Close Table")],
+                n_clicks=0,
+            ),
+        ]),
+        html.Div(className="inline-block chart-top-bar-title", children=[
+            html.Div(className="two columns", children=[
+                html.I(className="far fa-chart-bar w3-xxlarge", )
+            ]),
+            html.Div(className="nine columns", children=[
+                html.Div(className="", children="Details"),
+            ])
+        ]),
+        html.Div(id='datatable_3', children=[
+            dash_table.DataTable(
+                columns=[
+                    {"name": i, "id": i} for i in df_devs
+                ],
+                data=df_devs.to_dict('records'),
+                id="pie_chart_1",
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current=0,
+                page_size=10,
+                style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+            ),
+        ])
+    ]),
+    html.Div(id="details_table_4", className="info-table hide", children=[
+        html.Div(className="graph-toolbar", children=[
+            html.Span(
+                className="inline-block chart-title",
+                id="close_button_4",
+                children=[html.I(className="fas fa-times w3-xlarge", title="Close Table")],
+                n_clicks=0,
+            ),
+        ]),
+        html.Div(className="inline-block chart-top-bar-title", children=[
+            html.Div(className="two columns", children=[
+                html.I(className="far fa-chart-bar w3-xxlarge", )
+            ]),
+            html.Div(className="nine columns", children=[
+                html.Div(className="", children="Details"),
+            ])
+        ]),
+        html.Div(id='datatable_4', children=[
+            dash_table.DataTable(
+                columns=[
+                    {"name": i, "id": i} for i in df_devs
+                ],
+                data=df_devs.to_dict('records'),
+                id="Language-graph_table",
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current=0,
+                page_size=10,
+                style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+            ),
+        ])
+    ])
+])
+
+
+@app.callback(
+    [Output('Dev_chart_yearly', 'figure'),
+     Output('datastore-chart_1', 'children')],
+    [Input('year-select', 'value'),
+     Input('multi-priority', 'value'),
+     Input('Categories', 'value'),
+     Input('Areas', 'value'),
+     Input('Dev_chart_yearly_table', "derived_virtual_data"),
+     Input('Tweak-Dev_chart_yearly', 'n_clicks'),
+     Input('Refresh-Dev_chart_yearly', 'n_clicks')])
+def update_graph_1(sel_year, sel_priorities, sel_categories, sel_areas, rows, tweak_click, refresh_click):
+    """
+    Function to update and display the first graph based on the filtered value and also store it in the datastore
+    :param sel_year:
+    :param sel_priorities:
+    :param sel_categories:
+    :param sel_areas:
+    :param rows:
+    :param tweak_click:
+    :param refresh_click:
+    :return:
+    """
+    # Converting the filter values into list
+    if type(sel_areas) != list:
+        sel_areas = [sel_areas]
+    if type(sel_categories) != list:
+        sel_categories = [sel_categories]
+    if type(sel_priorities) != list:
+        sel_priorities = [sel_priorities]
+
+    if sel_priorities == ["All"]:
+        sel_priorities = ["High", "Medium", "Low"]
+    if sel_categories == ["All"]:
+        sel_categories = ["Bu", "CC", "CD", "II", "IS", "RR", "TT"]
+    if sel_areas == ["All"]:
+        sel_areas = ['area1', "area2", "area3", "area4"]
+
+    # To identify the button clicked
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    # If change is by any of the filters or button, apply the changes to the chart. Otherwise oad from the datatable
+    if button_clicked == "Refresh-Dev_chart_yearly" or button_clicked == "multi-priority" \
+            or button_clicked == "Categories" or button_clicked == "Areas" or \
+            button_clicked == "year-select" or rows is None:
+
+        filtered_df = df_mini[df_mini.year == sel_year]
+        filtered_df = filtered_df[filtered_df.region.isin(sel_areas)]
+        filtered_df = filtered_df[filtered_df.priority_desc.isin(sel_priorities)]
+        filtered_df = filtered_df[filtered_df.project_cat_level1.isin(sel_categories)]
+
+    else:
+        filtered_df = pd.DataFrame(rows)
+
+    df_weeks = filtered_df.groupby("project_cat_level1")["weeks_complete"].sum()
+    traces = [{'x': [key], 'y': [round(df_weeks[key])], 'type': 'bar', 'name': str(key),
+               'text': [round(df_weeks[key])], 'textposition': 'auto', 'marker': {'color': color_chart_map[key]}}
+              for key in df_weeks.index]
+
+    # Creating the figure from the data
+    figure = {
+        'data': traces,
+        'layout': {
+            'showlegend': True,
+            'width': 600,
+            'legend': dict(orientation='h'),
+            'margin': {
+                'l': 50,
+                'b': 50,
+                't': 50,
+                'r': 15,
+            },
+            'xaxis': dict(
+                title='Categories',
+                titlefont=dict(
+                    family='Courier New, monospace',
+                    size=15
+                )),
+            'yaxis': dict(
+                title='No of Weeks',
+                titlefont=dict(
+                    family='Helvetica, monospace',
+                    size=15
+                ),
+                gridcolor="#3E3F40"
+            )
+        }
+    }
+    return [figure, filtered_df.to_json()]
+
+
+@app.callback(
+    [Output('Dev_chart', 'figure'),
+     Output('datastore-chart_2', 'children')],
+    [Input('multi-priority', 'value'),
+     Input('Categories', 'value'),
+     Input('Areas', 'value'),
+     Input('Dev_chart_table', "derived_virtual_data"),
+     Input('Tweak-Dev_chart', 'n_clicks'),
+     Input('Refresh-Dev_chart', 'n_clicks')])
+def update_graph_2(sel_priorities, sel_categories, sel_areas, rows, tweak_click, refresh_click):
+    """
+    Function to update and display the second graph based on the filtered value and also store it in the datastore
+    :param sel_priorities:
+    :param sel_categories:
+    :param sel_areas:
+    :param rows:
+    :param tweak_click:
+    :param refresh_click:
+    :return:
+    """
+
+    if type(sel_categories) != list:
+        sel_categories = [sel_categories]
+    if type(sel_priorities) != list:
+        sel_priorities = [sel_priorities]
+    if type(sel_areas) != list:
+        sel_areas = [sel_areas]
+
+    if sel_priorities == ["All"]:
+        sel_priorities = ["High", "Medium", "Low"]
+    if sel_categories == ["All"]:
+        sel_categories = ["Bu", "CC", "CD", "II", "IS", "RR", "TT"]
+    if sel_areas == ["All"]:
+        sel_areas = ["area1", "area2", "area3", "area4"]
+
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if button_clicked == "Refresh-Dev_chart" or button_clicked == "multi-priority" \
+            or button_clicked == "Categories" or button_clicked == "Areas" or rows is None:
+
+        filtered_df = df_mini[df_mini.region.isin(sel_areas)]
+        filtered_df = filtered_df[filtered_df.priority_desc.isin(sel_priorities)]
+        filtered_df = filtered_df[filtered_df.project_cat_level1.isin(sel_categories)]
+        filtered_df = filtered_df[filtered_df.project_cat_level1.isin(sel_categories)]
+
+    else:
+        filtered_df = pd.DataFrame(rows)
+
+    df_yearly = filtered_df.groupby(["project_cat_level1", "year"])["weeks_complete"].sum()
+    traces = [{'x': list(df_yearly[key].index.values), 'y': list(df_yearly[key].values),
+               'mode': 'lines', 'name': str(key)} for key in df_yearly.index.levels[0].values]
+
+    figure = {
+        'data': traces,
+        'layout': {
+            'colorway': px.colors.sequential.Aggrnyl,
+            'legend': dict(orientation='h'),
+            'width': 600,
+            'margin': {
+                'l': 50,
+                'b': 50,
+                't': 50
+            },
+            'xaxis': dict(
+                title='Categories',
+                titlefont=dict(
+                    family='Courier New, monospace',
+                    size=15
+                )),
+            'yaxis': dict(
+                title='No of Weeks',
+                titlefont=dict(
+                    family='Helvetica, monospace',
+                    size=15
+                ),
+                gridcolor="#3E3F40"
+            )
+        }
+    }
+    return [figure, filtered_df.to_json()]
+
+
+@app.callback(
+    [Output('chart-graph', "figure"),
+     Output('datastore-chart_3', 'children')],
+    [Input('pie_chart_1', "derived_virtual_data"),
+     Input('Tweak-chart-graph', 'n_clicks'),
+     Input('Refresh-chart-graph', 'n_clicks'),
+     Input('name_drop', 'value')])
+def update_graph_3(rows, tweak_click, refresh_click, name):
+    """
+    Function to update and display the third graph based on the filtered value and also store it in the datastore
+    :param rows:
+    :param tweak_click:
+    :param refresh_click:
+    :param name:
+    :return:
+    """
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    status = []  # Array to store the status of the project
+    number = []  # Array to store the number of projects under the status
+
+    if button_clicked == "Refresh-chart-graph" or button_clicked == "Tweak-chart-graph" \
+            or button_clicked == "name_drop":
+        dff = df_devs[df_devs.dev_owner == name]
+    else:
+        if rows is None:
+            dff = df_devs[df_devs.dev_owner == name]
+        else:
+            dff = pd.DataFrame(rows)
+
+    df_count = dff.groupby("dev_owner")["prjstatus"].value_counts()
+
+    for y in df_count.index.values:
+        if y[0] == name:
+            status.append(y[1])
+            number.append(df_count[y])
+
+    df_new = pd.DataFrame({"status": status, "count": number})
+
+    fig = px.pie(df_new, values='count', hole=.7, color_discrete_sequence=px.colors.sequential.Teal_r)
+    fig.update_traces(labels=status, textinfo='label+value', hoverinfo='label')
+
+    json_value = dff.to_json()
+    return [fig, json_value]
+
+
+@app.callback(
+    [Output('Language-graph', 'figure'),
+     Output('datastore-chart_4', 'children')],
+    [Input('language_select_multi', 'value'),
+     Input('Language-graph_table', "derived_virtual_data"),
+     Input('Tweak-Language-graph', 'n_clicks'),
+     Input('Refresh-Language-graph', 'n_clicks')])
+def update_graph_4(sel_languages, rows, tweak_click, refresh_click):
+    """
+    Function to update and display the fourth graph based on the filtered value and also store it in the datastore
+    :param sel_languages:
+    :param rows:
+    :param tweak_click:
+    :param refresh_click:
+    :return:
+    """
+    if type(sel_languages) != list:
+        sel_languages = [sel_languages]
+
+    if sel_languages == ["All"]:
+        sel_languages = [y for y in df_tech_stack.tech.unique()]
+
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if button_clicked == "Refresh-Language-graph" or button_clicked == "language_select_multi" or rows is None:
+        filtered_df = df_tech_stack
+        filtered_df = filtered_df[filtered_df.tech.isin(sel_languages)]
+    else:
+        filtered_df = pd.DataFrame(rows)
+
+    df_tech_grouped = filtered_df.groupby("tech")["year"].value_counts()
+    df_tech_grouped = df_tech_grouped.sort_index()
+    traces = [{'x': list(df_tech_grouped[key].index.values), 'y': list(df_tech_grouped[key].values),
+               'mode': 'lines', 'name': str(key)} for key in df_tech_grouped.index.levels[0].values]
+
+    figure = {
+        'data': traces,
+        'layout': {
+            'colorway': px.colors.cyclical.Edge,
+            'xaxis': dict(
+                title='Years',
+                titlefont=dict(
+                    family='Courier New, monospace',
+                    size=20
+                )),
+            'yaxis': dict(
+                title='No of Projects',
+                tick0=0,
+                titlefont=dict(
+                    family='Helvetica, monospace',
+                    size=20
+                ),
+                gridcolor="#3E3F40"
+            )
+        }
+    }
+    return [figure, filtered_df.to_json()]
+
+
+# Callback to update datatable
+@app.callback(
+    [Output('datatable_1', 'children')],
+    [Input('year-select', 'value'),
+     Input('Tweak-Dev_chart_yearly', 'n_clicks'),
+     Input('Details-Dev_chart_yearly', 'n_clicks')],
+    [State('datastore-chart_1', 'children')])
+def update_datatable_1(sel_year, tweak, details, frame1):
+    """
+
+    :param sel_year:
+    :param tweak:
+    :param details:
+    :param frame1:
+    :return:
+    """
+    # print(frame1)
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if type(frame1) != list:
+        frame1 = [frame1]
+
+    if frame1:
+        dataframe = pd.read_json(frame1[0])
+        dataframe = dataframe[dataframe.year == sel_year]
+        originalframe = dataframe
+        idd = "Dev_chart_yearly_table"
+    else:
+        originalframe = df_mini[df_mini.year == sel_year]
+        dataframe = originalframe
+        idd = "Dev_chart_yearly_table"
+
+    if "Details" in button_clicked:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    else:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            editable=True,
+            filter_action="native",
+            sort_action="native",
+            sort_mode="multi",
+            column_selectable="single",
+            row_selectable="multi",
+            row_deletable=True,
+            selected_columns=[],
+            selected_rows=[],
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    return [data_table]
+
+
+@app.callback(
+    [Output('datatable_2', 'children')],
+    [Input('Tweak-Dev_chart', 'n_clicks'),
+     Input('Details-Dev_chart', 'n_clicks')],
+    [State('datastore-chart_2', 'children')])
+def update_datatable_2(tweak, details, frame2):
+    """
+
+    :param tweak:
+    :param details:
+    :param frame2:
+    :return:
+    """
+    # print(tweak_click,details_click, frame)
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if type(frame2) != list:
+        frame2 = [frame2]
+
+    if frame2:
+        dataframe = pd.read_json(frame2[0])
+        originalframe = dataframe
+        idd = "Dev_chart_table"
+    else:
+        originalframe = df_mini
+        dataframe = originalframe
+        idd = "Dev_chart_table"
+
+    if "Details" in button_clicked:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    else:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            editable=True,
+            filter_action="native",
+            sort_action="native",
+            sort_mode="multi",
+            column_selectable="single",
+            row_selectable="multi",
+            row_deletable=True,
+            selected_columns=[],
+            selected_rows=[],
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    return [data_table]
+
+
+@app.callback(
+    [Output('datatable_3', 'children')],
+    [Input('Tweak-chart-graph', 'n_clicks'),
+     Input('Details-chart-graph', 'n_clicks')],
+    [State('datastore-chart_3', 'children')])
+def update_datatable_3(tweak, details, frame3):
+    """
+
+    :param tweak:
+    :param details:
+    :param frame3:
+    :return:
+    """
+
+    # print(tweak_click,details_click, frame)
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if type(frame3) != list:
+        frame3 = [frame3]
+
+    if frame3:
+        dataframe = pd.read_json(frame3[0])
+        originalframe = pd.read_json(frame3[0])
+        idd = "pie_chart_1"
+    else:
+        dataframe = df_devs[df_devs.dev_owner == "kerobert"].to_dict('records')  # The global Dictionary
+        originalframe = df_devs
+        idd = "pie_chart_1"
+
+    if "Details" in button_clicked:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    else:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            editable=True,
+            filter_action="native",
+            sort_action="native",
+            sort_mode="multi",
+            column_selectable="single",
+            row_selectable="multi",
+            row_deletable=True,
+            selected_columns=[],
+            selected_rows=[],
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    return [data_table]
+
+
+@app.callback(
+    [Output('datatable_4', 'children')],
+    [Input('Tweak-Language-graph', 'n_clicks'),
+     Input('Details-Language-graph', 'n_clicks')],
+    [State('datastore-chart_4', 'children')])
+def update_datatable_4(tweak, details, frame4):
+    """
+
+    :param tweak:
+    :param details:
+    :param frame4:
+    :return:
+    """
+    # print(tweak_click,details_click, frame)
+    ctx = dash.callback_context
+    button_clicked = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if type(frame4) != list:
+        frame4 = [frame4]
+
+    if frame4:
+        dataframe = pd.read_json(frame4[0])
+        originalframe = df_tech_stack
+        idd = "Language-graph_table"
+    else:
+        originalframe = df_tech_stack
+        dataframe = originalframe
+        idd = "Language-graph_table"
+
+    if "Details" in button_clicked:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    else:
+        data_table = dash_table.DataTable(
+            columns=[
+                {"name": i, "id": i} for i in originalframe
+            ],
+            data=dataframe.to_dict('records'),
+            id=idd,
+            editable=True,
+            filter_action="native",
+            sort_action="native",
+            sort_mode="multi",
+            column_selectable="single",
+            row_selectable="multi",
+            row_deletable=True,
+            selected_columns=[],
+            selected_rows=[],
+            page_action="native",
+            page_current=0,
+            page_size=10,
+            style_table={'overflowX': 'auto', 'height': '300px', 'overflowY': 'auto'}
+        ),
+
+    return [data_table]
+
+
+@app.callback(
+    Output('display_area', 'children'),
+    [Input('year-select', 'value'),
+     Input('multi-priority', 'value'),
+     Input('Categories', 'value'),
+     Input('Areas', 'value')])
+def get_stats(sel_year, sel_priorities, sel_categories, sel_areas):
+    """
+
+    :param sel_year:
+    :param sel_priorities:
+    :param sel_categories:
+    :param sel_areas:
+    :return:
+    """
+
+    if type(sel_areas) != list:
+        sel_areas = [sel_areas]
+    if type(sel_categories) != list:
+        sel_categories = [sel_categories]
+    if type(sel_priorities) != list:
+        sel_priorities = [sel_priorities]
+
+    if sel_priorities == ["All"]:
+        sel_priorities = ["High", "Medium", "Low"]
+    if sel_categories == ["All"]:
+        sel_categories = ["Bu", "CC", "CD", "II", "IS", "RR", "TT"]
+    if sel_areas == ["All"]:
+        sel_areas = ["area1", "area2", "area3", "area4"]
+
+    child_list = []
+    filtered_df = df_mini[df_mini.region.isin(sel_areas)]
+    # print(filtered_df)
+    filtered_df = filtered_df[filtered_df.priority_desc.isin(sel_priorities)]
+    filtered_df = filtered_df[filtered_df.project_cat_level1.isin(sel_categories)]
+    df_yearly = filtered_df.groupby(["project_cat_level1", "year"])["weeks_complete"].sum()
+    for category in sel_categories:
+        if sel_year == df_mini['year'].min():
+            child_list.append(html.Div([
+                html.Div([
+                    html.I(id=category, className="fa fa-minus w3-xlarge"),
+                    html.P(" %", className="stat_no"),
+                    html.P(category, className="stat_category"),
+                ], className="card-grey")
+            ], className="one-seventh column"), )
+        else:
+            vall = (df_yearly[category][sel_year] - df_yearly[category][sel_year - 1]) / \
+                  df_yearly[category][sel_year]
+            # print(vall)
+            if vall > 0:
+                child_list.append(html.Div([
+                    html.Div([
+                        html.I(id=category, className="fa fa-arrow-up w3-xlarge"),
+                        html.P(category, className="stat_category"),
+                        html.P([" ", round(vall * 100, 2), "  %"], className="stat_no")
+                    ], className="card-green")
+                ], className="one-seventh column"), )
+
+            elif vall < 0:
+                child_list.append(html.Div([
+                    html.Div([
+                        html.I(id=category, className="fa fa-arrow-down w3-xlarge"),
+                        html.P(category, className="stat_category"),
+                        html.P([" ", round(vall * -100, 2), "  %"], className="stat_no")
+                    ], className="card-red")
+                ], className="one-seventh column"), )
+    return child_list
+
+
+@app.callback([Output('clicked_charts_store', 'children'), ],
+              [Input({'type': 'Checkbox', 'id': ALL}, 'value')])
+def store_chart_selected(values):
+    """
+    A function to store the charts clicked in a storage div
+    :param values:
+    :return:
+    """
+    ctx = dash.callback_context
+    clicked = []  # For storing the clicked charts for printing and emailing
+    sel_list = [[]]
+    if ctx.triggered[0]['value'] is not None:
+        for charts in ctx.inputs:
+            # print(ctx.triggered)
+            if ctx.inputs[charts] is not None and ctx.inputs[charts] != []:
+                # print(ctx.inputs[charts])
+                clicked.append(ctx.inputs[charts][0])
+
+    # print(clicked)
+    sel_list[0] = clicked
+    return sel_list
+
+
+@app.callback([Output('chart_1', 'className'),
+               Output('chart_2', 'className'),
+               Output('chart_3', 'className'),
+               Output('chart_4', 'className')],
+              [Input({'type': 'Checkbox', 'id': ALL}, 'value'),
+               Input('clicked_charts_store', 'children')])
+def chart_selector_toggle(values, clicked_charts):
+    """
+
+    :param values:
+    :param clicked_charts:
+    :return:
+    """
+    unselected = "row six columns graph-box unpicked"
+    classname_list = [unselected, unselected, unselected, unselected]
+    # print(clicked_charts)
+    for items in clicked_charts:
+        if items == "Dev_chart_yearly":
+            classname_list[0] = classname_list[0].replace("unpicked", "highlight")
+
+        if items == "Dev_chart":
+            classname_list[1] = classname_list[1].replace("unpicked", "highlight")
+
+        if items == "chart-graph":
+            classname_list[2] = classname_list[2].replace("unpicked", "highlight")
+
+        if items == "Language-graph":
+            classname_list[3] = classname_list[3].replace("unpicked", "highlight")
+
+    return classname_list
+
+
+@app.callback(
+    Output('table_area', 'children'),
+    [Input('year-select', 'value')])
+def get_stats(selected_year):
+    """
+
+    :param selected_year:
+    :return:
+    """
+    child_list = []
+    filtered_df = df_mini[df_mini['year'].isin([selected_year])]
+    limit = 1
+    for projects in filtered_df.itertuples():
+        # print(projects)
+        child_list.append(html.Tr([
+            html.Td(limit),
+            html.Td(projects[1]),
+            html.Td(projects[2]),
+            html.Td(projects[3], style={"display": "none"}),
+            html.Td(projects[8], style={"display": "none"}),
+            html.Td(projects[10], style={"display": "none"}),
+            html.Td(projects[11], style={"display": "none"}),
+            html.Td(projects[12], style={"display": "none"})
+        ]), )
+        limit += 1
+        if limit == 10:
+            break
+    return child_list
+
+
+# Updating Top Bar Values
+@app.callback(
+    Output('top_bar', 'children'),
+    [Input('year-select', 'value')])
+def update_top_bar(selected_year):
+    """
+
+    :param selected_year:
+    :return:
+    """
+    return get_top_bar(selected_year)
+
+
+@app.callback(Output('test_area', 'children'),
+              [Input('Email_button', 'n_clicks')],
+              [State('clicked_charts_store', 'children'),
+               State('Dev_chart_yearly', 'figure'),
+               State('Dev_chart', 'figure'),
+               State('chart-graph', 'figure'),
+               State('Language-graph', 'figure'),
+               State('sender', 'value'),
+               State('receiver', 'value'),
+               State('input_notes', 'value')
+               ])
+def email_charts(n_clicks, charts, graph1, graph2, graph3, graph4, sender_id, receivers, body):
+    """
+
+    :param n_clicks:
+    :param charts:
+    :param graph1:
+    :param graph2:
+    :param graph3:
+    :param graph4:
+    :param sender_id:
+    :param receivers:
+    :param body:
+    :return:
+    """
+
+    if receivers is None:
+        receivers = ""
+    receiver_id = receivers.split(";")
+    receiver_id = [x.strip() for x in receiver_id]
+
+    if charts:
+        chart_map = {'Dev_chart_yearly': graph1, 'Dev_chart': graph2, 'chart-graph': graph3, 'Language-graph': graph4}
+        # print(charts)
+        pngfiles = []
+
+        for chart in charts:
+            pngfiles.append(go.Figure(chart_map[chart]).to_image(format="png"))
+
+        msg = MIMEMultipart()
+        msg['Subject'] = "Charts"
+        msg['From'] = sender_id
+        msg['To'] = receivers
+        msg.attach(MIMEText(body, 'plain'))
+
+        for file in pngfiles:
+            img = MIMEImage(file)
+            msg.attach(img)
+
+        with smtplib.SMTP('mailhub.gmail.com') as smtp:
+            smtp.sendmail("jaison.john@gmal.com", "jaison.john@gmail.com", msg.as_string())
+
+    return f'''
+        Sender {sender_id}
+        Receiver {receiver_id}
+        Body {body}        
+    '''
+
+
+@app.callback(Output('test_area', 'className'),
+              [Input('Save_button', 'n_clicks')],
+              [State('clicked_charts_store', 'children'),
+               State('Dev_chart_yearly', 'figure'),
+               State('Dev_chart', 'figure'),
+               State('chart-graph', 'figure'),
+               State('Language-graph', 'figure')
+               ])
+def save_charts(n_clicks, charts, graph1, graph2, graph3, graph4):
+    """
+
+    :param n_clicks:
+    :param charts:
+    :param graph1:
+    :param graph2:
+    :param graph3:
+    :param graph4:
+    :return:
+    """
+    if charts:
+        chart_map = {'Dev_chart_yearly': graph1, 'Dev_chart': graph2, 'chart-graph': graph3, 'Language-graph': graph4}
+        for chart in charts:
+            go.Figure(chart_map[chart]).write_image(f"images/{chart}.png")
+
+    return ""
+
+
+if __name__ == "__main__":
+    app.run_server(debug=True)
+
+
+#####################################
+
+$(document).on('click', '#table1 tr', function() {
+  $(this).addClass('selected').siblings().removeClass('selected');
+
+  document.getElementById("name").innerHTML = $(this).find('td:eq(1)').html();
+  document.getElementById("category").innerHTML = $(this).find('td:eq(3)').html();
+  document.getElementById("status").innerHTML = $(this).find('td:eq(4)').html();
+  document.getElementById("owner").innerHTML = $(this).find('td:eq(5)').html();
+  document.getElementById("contact").innerHTML = $(this).find('td:eq(6)').html();
+  document.getElementById("description").innerHTML = $(this).find('td:eq(7)').html();
+
+  $("#details_card").removeClass("hide");
+  $(".everything").addClass("blur");
+
+});
+
+
+$(document).on('click', '#Details-chart-graph', function() {
+  $("#details_table_3").removeClass("hide");
+});
+$(document).on('click', '#Tweak-chart-graph', function() {
+  $("#details_table_3").removeClass("hide");
+});
+
+$(document).on('click', '#Details-Language-graph', function() {
+  $("#details_table_4").removeClass("hide");
+});
+$(document).on('click', '#Tweak-Language-graph', function() {
+  $("#details_table_4").removeClass("hide");
+});
+
+$(document).on('click', '#Details-Dev_chart_yearly', function() {
+  $("#details_table_1").removeClass("hide");
+});
+$(document).on('click', '#Tweak-Dev_chart_yearly', function() {
+  $("#details_table_1").removeClass("hide");
+});
+
+$(document).on('click', '#Details-Dev_chart', function() {
+  $("#details_table_2").removeClass("hide");
+});
+$(document).on('click', '#Tweak-Dev_chart', function() {
+  $("#details_table_2").removeClass("hide");
+});
+
+
+$(document).on('click', '#close_button', function() {
+  $("#details_card").addClass("hide");
+  $("#everything").removeClass("blur");
+});
+
+
+$(document).on('click', '#close_button_1', function() {
+  $("#details_table_1").addClass("hide");
+  $("#everything").removeClass("blur");
+});
+
+$(document).on('click', '#close_button_2', function() {
+  $("#details_table_2").addClass("hide");
+  $("#everything").removeClass("blur");
+});
+
+$(document).on('click', '#close_button_3', function() {
+  $("#details_table_3").addClass("hide");
+  $("#everything").removeClass("blur");
+});
+$(document).on('click', '#close_button_4', function() {
+  $("#details_table_4").addClass("hide");
+  $("#everything").removeClass("blur");
+});
+
+$(document).on('click', '#btn-cancel', function() {
+  $("#form-frame").addClass("hide");
+});
+
+$(document).on('click', '#open-button', function() {
+  $("#form-frame").removeClass("hide");
+});
+
+
+#################################################################
+
+/* Table of contents
+––––––––––––––––––––––––––––––––––––––––––––––––––
+- Plotly.js
+- Grid
+- Base Styles
+- Typography
+- Links
+- Buttons
+- Forms
+- Lists
+- Code
+- Tables
+- Spacing
+- Utilities
+- Clearing
+- Media Queries
+*/
+
+/* PLotly.js
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+/* plotly.js's modebar's z-index is 1001 by default
+ * https://github.com/plotly/plotly.js/blob/7e4d8ab164258f6bd48be56589dacd9bdd7fded2/src/css/_modebar.scss#L5
+ * In case a dropdown is above the graph, the dropdown's options
+ * will be rendered below the modebar
+ * Increase the select option's z-index
+ */
+
+/* This was actually not quite right -
+   dropdowns were overlapping each other (edited October 26)
+
+.Select {
+    z-index: 1002;
+}*/
+
+
+/* Grid
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box; }
+.column,
+.columns {
+  width: 100%;
+  float: left;
+  box-sizing: border-box; }
+
+/* For devices larger than 400px */
+@media (min-width: 400px) {
+  .container {
+    width: 85%;
+    padding: 0; }
+}
+
+/* For devices larger than 550px */
+  @media (min-width: 550px) {
+    .container {
+      width: 80%; }
+    .column,
+    .columns {
+      margin-left: 0.5%; }
+    .column:first-child,
+    .columns:first-child {
+      margin-left: 0; }
+
+    .one.column,
+    .one.columns                    { width: 8%;             }
+    .two.columns                    { width: 16.25%;         }
+    .three.columns                  { width: 22%;            }
+    .four.columns                   { width: 33%;            }
+    .five.columns                   { width: 39.3333333333%; }
+    .six.columns                    { width: 49.75%;          }
+    .seven.columns                  { width: 56.6666666667%; }
+    .eight.columns                  { width: 66.5%;          }
+    .nine.columns                   { width: 74.0%;          }
+    .ten.columns                    { width: 82.6666666667%; }
+    .eleven.columns                 { width: 91.5%; }
+    .twelve.columns                 { width: 100%; margin-left: 0; }
+
+    .one-third.column               { width: 30.6666666667%; }
+    .two-thirds.column              { width: 65.3333333333%; }
+    .one-seventh.column              { width: 13.7%; }
+
+    .one-half.column                { width: 48%; }
+
+    /* Offsets */
+    .offset-by-one.column,
+    .offset-by-one.columns          { margin-left: 8.66666666667%; }
+    .offset-by-two.column,
+    .offset-by-two.columns          { margin-left: 17.3333333333%; }
+    .offset-by-three.column,
+    .offset-by-three.columns        { margin-left: 26%;            }
+    .offset-by-four.column,
+    .offset-by-four.columns         { margin-left: 34.6666666667%; }
+    .offset-by-five.column,
+    .offset-by-five.columns         { margin-left: 43.3333333333%; }
+    .offset-by-six.column,
+    .offset-by-six.columns          { margin-left: 52%;            }
+    .offset-by-seven.column,
+    .offset-by-seven.columns        { margin-left: 60.6666666667%; }
+    .offset-by-eight.column,
+    .offset-by-eight.columns        { margin-left: 69.3333333333%; }
+    .offset-by-nine.column,
+    .offset-by-nine.columns         { margin-left: 78.0%;          }
+    .offset-by-ten.column,
+    .offset-by-ten.columns          { margin-left: 86.6666666667%; }
+    .offset-by-eleven.column,
+    .offset-by-eleven.columns       { margin-left: 95.3333333333%; }
+
+    .offset-by-one-third.column,
+    .offset-by-one-third.columns    { margin-left: 34.6666666667%; }
+    .offset-by-two-thirds.column,
+    .offset-by-two-thirds.columns   { margin-left: 69.3333333333%; }
+
+    .offset-by-one-half.column,
+    .offset-by-one-half.columns     { margin-left: 52%; }
+
+  }
+
+
+/* Base Styles
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+/* NOTE
+html is set to 62.5% so that all the REM measurements throughout Skeleton
+are based on 10px sizing. So basically 1.5rem = 15px :) */
+html {
+  font-size: 62.5%;
+}
+
+body {
+  font-size: 1.5em; /* currently ems cause chrome bug misinterpreting rems on body element */
+  line-height: 1.6;
+  font-weight: 400;
+  font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: rgb(50, 50, 50); }
+
+
+/* Typography
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-weight: 300; }
+h1 { font-size: 4.5rem; line-height: 1.2;  letter-spacing: -.1rem; margin-bottom: 2rem; }
+h2 { font-size: 3.6rem; line-height: 1.25; letter-spacing: -.1rem; margin-bottom: 1.8rem; margin-top: 1.8rem;}
+h3 { font-size: 3.0rem; line-height: 1.3;  letter-spacing: -.1rem; margin-bottom: 1.5rem; margin-top: 1.5rem;}
+h4 { font-size: 2.6rem; line-height: 1.35; letter-spacing: -.08rem; margin-bottom: 1.2rem; margin-top: 1.2rem;}
+h5 { font-size: 2.2rem; line-height: 1.5;  letter-spacing: -.05rem; margin-bottom: 0.6rem; margin-top: 0.6rem;}
+h6 { font-size: 2.0rem; line-height: 1.6;  letter-spacing: 0; margin-bottom: 0.75rem; margin-top: 0.75rem;}
+
+p {
+  margin-top: 0; }
+
+
+/* Blockquotes
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+blockquote {
+  border-left: 4px lightgrey solid;
+  padding-left: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  margin-left: 0rem;
+}
+
+
+
+/* Buttons
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.button,
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  display: inline-block;
+  height: 38px;
+  padding: 0 30px;
+  color: #555;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 38px;
+  letter-spacing: .1rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: transparent;
+  border-radius: 4px;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  box-sizing: border-box; }
+.button:hover,
+button:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+input[type="button"]:hover,
+.button:focus,
+button:focus,
+input[type="submit"]:focus,
+input[type="reset"]:focus,
+input[type="button"]:focus {
+  color: #333;
+  border-color: #888;
+  outline: 0; }
+.button.button-primary,
+button.button-primary,
+input[type="submit"].button-primary,
+input[type="reset"].button-primary,
+input[type="button"].button-primary {
+  color: #FFF;
+  background-color: #33C3F0;
+  border-color: #33C3F0; }
+.button.button-primary:hover,
+button.button-primary:hover,
+input[type="submit"].button-primary:hover,
+input[type="reset"].button-primary:hover,
+input[type="button"].button-primary:hover,
+.button.button-primary:focus,
+button.button-primary:focus,
+input[type="submit"].button-primary:focus,
+input[type="reset"].button-primary:focus,
+input[type="button"].button-primary:focus {
+  color: #FFF;
+  background-color: #1EAEDB;
+  border-color: #1EAEDB; }
+
+
+/* Forms
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+input[type="email"],
+input[type="number"],
+input[type="search"]
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+select {
+  height: 38px;
+  padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
+  background-color: #fff;
+  border: 1px solid #D1D1D1;
+  border-radius: 4px;
+  box-shadow: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: inherit; /*https://stackoverflow.com/questions/6080413/why-doesnt-input-inherit-the-font-from-body*/}
+/* Removes awkward default styles on some inputs for iOS */
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+textarea {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none; }
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="password"]:focus,
+select:focus {
+  border: 1px solid #33C3F0;
+  outline: 0; }
+label,
+legend {
+  display: block;
+  margin-bottom: 0px; }
+fieldset {
+  padding: 0;
+  border-width: 0; }
+input[type="radio"] {
+  display: inline; }
+label > .label-body {
+  display: inline-block;
+  margin-left: .5rem;
+  font-weight: normal; }
+
+
+/* Lists
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+ul {
+  list-style: circle inside; }
+ol {
+  list-style: decimal inside; }
+ol, ul {
+  padding-left: 0;
+  margin-top: 0; }
+ul ul,
+ul ol,
+ol ol,
+ol ul {
+  margin: 1.5rem 0 1.5rem 3rem;
+  font-size: 90%; }
+li {
+  margin-bottom: 1rem; }
+
+
+/* Tables
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+table {
+  border-collapse: collapse;
+}
+
+/* Spacing
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+button,
+.button {
+  margin-bottom: 0rem; }
+textarea,
+select,
+fieldset {
+  margin-bottom: 0rem; }
+pre,
+dl,
+figure,
+table,
+form {
+  margin-bottom: 0rem; }
+p,
+ul,
+ol {
+  margin-bottom: 0.75rem; }
+
+/* Utilities
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.u-full-width {
+  width: 100%;
+  box-sizing: border-box; }
+.u-max-full-width {
+  max-width: 100%;
+  box-sizing: border-box; }
+.u-pull-right {
+  float: right; }
+.u-pull-left {
+  float: left; }
+
+
+/* Misc
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+hr {
+  margin-top: 3rem;
+  margin-bottom: 3.5rem;
+  border-width: 0;
+  border-top: 1px solid #E1E1E1; }
+
+
+/* Clearing
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+/* Self Clearing Goodness */
+.container:after,
+.row:after,
+.u-cf {
+  content: "";
+  display: table;
+  clear: both; }
+
+
+
+/* Custom App CSS
+---------------------------------------*/
+
+.three-col{
+  display: inline-block;
+  width: 33%;
+  text-align: center;
+}
+
+.two-col{
+  display: inline-block;
+  width: 16.25%;
+  text-align: center;
+}
+
+
+.visible{
+  display: block;
+  position: absolute;
+  overflow: auto;
+  z-index: 20;
+  width: 45%;
+  height: 75%;
+  background-image: -webkit-linear-gradient(top,#30333d,#18252e 63%);
+  top: 58px;
+}
+
+.not_visible{
+  display: none;
+  position: absolute;
+}
+
+.dropdown-period{
+  width: 100px;
+}
+
+.inline-block{
+  display: inline-block
+}
+
+.chart-close{
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 12px;
+}
+
+.graph-top-bar{
+  display: inline-block;
+}
+
+.bottom-dropdown{
+  width: 200px;
+  padding:12px;
+}
+
+  .two-col{
+    display: inline-block;
+    width: 33%;
+    text-align: center;
+  }
+
+  .div-info{
+    padding: 64px;
+  }
+}
+
+
+/* Style the counter cards */
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  text-align: center;
+  background-color: #f1f1f1;
+}
+
+.card-green {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  text-align: center;
+  background-color: #00a68bd6;
+}
+
+.card-red {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  text-align: center;
+  background-color: #f71a42d6;
+}
+
+.card-grey {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  text-align: center;
+  background-color: #B2ACB2;
+}
+
+.selected {
+    background-color: #007effcc;
+    color: #FFF;
+}
+
+.stat_category {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.stat_no {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+  /* Tables
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+td {cursor: pointer;}
+table {
+  table-layout: auto;
+  width: 100%;
+  border-collapse: collapse;
+    border: solid;
+  border-width: 1px 0;
+}
+
+th, td {
+  padding: 10px;
+}
+
+tr{
+  border: solid;
+  border-width: 1px 0;
+
+}
+.alt{
+ background-color: red;
+}
+
+#table1 tr:hover {
+    background-color: #007effcc
+}
+
+
+#table2 {
+  table-layout: auto;
+  border-collapse: collapse;
+  border : 1px solid white;
+  font-size : 14px;
+  font-weight : bolder ;
+}
+
+#table2 td {
+  padding: 1rem;
+  text-align: left;
+  border : 1px solid white;
+}
+
+#table2 th {
+  padding: 0.5rem;
+  text-align: center;
+  border : 1px solid white;
+  font-weight : bold;
+}
+
+.highlight{
+  box-shadow: inset 0px 20px 90px rgb(112, 182, 255)
+}
+
+.unpicked{
+box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+
+    /* sidebar bar
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+.sidebar-dark .sidebar-heading {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+div.search_div > label{
+    margin-bottom : 5px;
+}
+
+div.search_div{
+    margin-bottom : 5px;
+}
+
+.Select-placeholder{
+  padding-left:21px;
+}
+
+.sidebar-heading {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+   /* Top Cell Formatting
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+.top-cell{
+    width: 31%;
+    display: inline-block;
+    background-color : #FFFFFF;
+    box-shadow: 5px 5px 20px grey;
+    margin-left : 10px;
+    margin-right: 10px;
+    padding : 10px
+}
+
+.top-cell-contents p{
+    margin : 5px;
+    padding : 0;
+}
+
+.div-top-bar{
+  color: #000000;
+  margin-bottom : 20px;
+  text-align : center;
+  font-family: "Gill Sans", sans-serif;
+
+}
+
+.p-top-bar{
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom : 20px;
+}
+
+.p-top-bar-no{
+    font-size: 1.2em;
+    font-weight: bolder;
+}
+
+   /* Body Formatting
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+body{
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,
+    "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+    color: #000000;
+    height: 100vh;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+}
+
+.div-right-panel{
+  padding: 30px 10px 32px 10px;
+}
+
+
+ /* Graph Formatting
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+.graph-area{
+    margin-top : 10px;
+    margin-bottom : 15px;
+}
+
+.graph-box{
+    backgroundColor : grey;
+    padding : 10px
+}
+
+.chart-top-bar{
+  padding:12px;
+}
+
+.chart-top-bar-title{
+  color: #000000;
+  text-align : center;
+  font-size: 1.4em;
+  width: 400px;
+  font-weight: bolder;
+}
+
+.chart-title{
+  margin-top: 3px;
+  margin-right: 12px;
+  padding-right: 12px;
+}
+
+.graph-toolbar{
+    float: right;
+    margin-top : 7px;
+}
+
+     /* Sidebar Formatting
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+.left-side-panel{
+    padding: 10px 10px 70px 10px;
+}
+
+.div-left-panel{
+  color: #000000;
+  margin: 0px;
+  height:100%;
+  box-shadow: 5px 5px 5px lightgrey;
+  padding-right: 10px,
+  padding-left: 10px,
+  padding-bottom: 200px,
+}
+
+
+.div-info{
+    text-align: center;
+}
+
+.fancy-head{
+    font-size : 30px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    text-shadow: 0px -2px 0px #333, 0px 2px 3px #666;
+    position: absolute;
+    top: 10px;
+    right: 16px
+}
+
+.sidebar{
+    color: black;
+}
+
+.sidebar-divider {
+    border-top: 2px solid rgba(105, 105, 105, 0.15);
+    margin : 10px;
+}
+
+.sidebar-heading {
+    text-transform: uppercase !important;
+    text-align: center;
+    font-weight: bold;
+    color: black;
+    font-size : 15px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+div.Select-value, .Select-control,div.period, .Select-input{
+  padding:0px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.Select-control{
+  backgroundColor: inherit;
+  color:#b4b4b4;
+  border-color: rgba(180, 180, 180, 0.4);
+  border-radius: 20px 20px 20px 20px / 50% 50% 50% 50%;
+  margin-top : 3px;
+  margin-bottom : 3px;
+}
+
+.Select-value-label{
+  position: relative;
+  padding: 0 10px;
+}
+
+.has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label{
+  color:#b4b4b4;
+}
+
+.Select.is-open> .Select-control{
+  border-radius: 20px 20px 20px 20px / 50% 50% 50% 50%;
+  backgroundColor: inherit;
+}
+
+.Select-menu-outer {
+  margin-top: 7px;
+  backgroundColor: #262a30;
+  border: 1px solid #b4b4b4;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.Checkbox {
+	font-size : 17px;
+    font-weight : bold ;
+    padding: 5px;
+}
+
+.search_div{
+}
+
+.Outer_label{
+    font-size : 18px;
+    padding : 5px;
+    font-weight : bold
+}
+
+.Button_group{
+    margin-top: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+    padding 2px;
+}
+
+.Button_new {
+  border-radius: 2px;
+  text-align: center;
+  text-decoration: none;
+  background-color : #007effcc ;
+  font-size: 12px;
+  font-weight : bolder;
+  margin: 5px;
+  width: 100%;
+  color : black;
+  padding: 0px;
+  opacity: 0.7;
+}
+
+.Button_new:hover {
+  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.24), 0 5px 5px 0 rgba(0,0,0,0.15);
+  opacity: 1;
+}
+
+.info-card{
+    background-color : #FFFFFF;
+    border : 1px solid;
+    padding-top : 5px;
+    margin : 10px;
+    position : fixed;
+    top: 20vh;
+    left : 30vh;
+    width: 600px;
+    z-index: 2 ;
+}
+
+.info-table{
+    background-color : #FFFFFF;
+    border : 1px solid;
+    padding-top : 5px;
+    margin : 10px;
+    position : fixed;
+    top: 20vh;
+    left : 30vh;
+    width: 1000px;
+    z-index: 2 ;
+}
+
+.hide{
+    display : none;
+}
+
+.blur{
+    backdrop-filter: blur(100px);
+    background: rgba(255, 255, 255, 0.4);
+    height : 100vh;
+    z-index:2;
+}
+
+.navbar{
+    object-fit: fill;
+    position: relative;
+    text-align: center;
+    color: white;
+    font-family : Gill Sans Extrabold, sans-serif;
+    font-weight : 100;
+    font-size: 1.2em;
+}
+
+     /* Icons Formatting
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+.fa-redo:hover, .fa-pencil-alt:hover, .fa-info:hover {
+    color: #007effcc;
+}
+
+.fa-times:hover{
+    color: red;
+}
+
+.w3-small {
+  font-size: 12px !important
+}
+
+.w3-medium {
+  font-size: 15px !important
+}
+
+.w3-large {
+  font-size: 18px !important
+}
+
+.w3-xlarge {
+  font-size: 24px !important
+}
+
+.w3-xxlarge {
+  font-size: 36px !important
+}
+
+.w3-xxxlarge {
+  font-size: 48px !important
+}
+
+
+#form-frame{
+  position: fixed;
+  border: 3px solid black;
+  z-index: 9;
+  padding : 10px;
+  top: 20vh;
+  left : 50vh;
+  max-width: 400px;
+  background-color: white;
+}
+
+/* The popup form - hidden by default */
+.form-popup {
+}
+
+/* Add styles to the form container */
+.form-container {
+
+}
+
+/* Full-width input fields */
+.form-container input[type=text], .form-container input[type=password] {
+  width: 100%;
+  border: none;
+  background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}
+
+input[type=checkbox]{
+    margin: 5px; !important
+      /* Double-sized Checkboxes */
+  -ms-transform: scale(1.5); /* IE */
+  -moz-transform: scale(1.5); /* FF */
+  -webkit-transform: scale(1.5); /* Safari and Chrome */
+  -o-transform: scale(1.5); /* Opera */
+  transform: scale(1.5);
+}
